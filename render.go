@@ -36,6 +36,7 @@ type Render struct {
 	selectedDescriptionBGColor   Color
 	scrollbarThumbColor          Color
 	scrollbarBGColor             Color
+	inputTextCallback            func(string) (line string)
 }
 
 // Setup to initialize console output.
@@ -195,7 +196,13 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(line)
+	if r.inputTextCallback != nil {
+
+		r.out.WriteRawStr(r.inputTextCallback(line))
+	} else {
+		r.out.WriteStr(line)
+	}
+
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.lineWrap(cursor)
 
@@ -229,7 +236,13 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.clear(cursor)
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(buffer.Document().Text + "\n")
+
+	if r.inputTextCallback != nil {
+		r.out.WriteRawStr(r.inputTextCallback(buffer.Document().Text + "\n"))
+	} else {
+		r.out.WriteStr(buffer.Document().Text + "\n")
+	}
+
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	debug.AssertNoError(r.out.Flush())
 	if r.breakLineCallback != nil {
